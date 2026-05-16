@@ -31,12 +31,13 @@ const SY = require('node-telegram-bot-api');
 const fs = require('fs');
 const path = require('path');
 const fetch = require('node-fetch').default;
-const {
-    log
-} = require("@sabir7718/log");
+const { log } = require("@sabir7718/log");
 const config = require("./config");
 const yts = require('yt-search');
 const ffmpeg = require('fluent-ffmpeg');
+const http = require('http');
+
+const PORT = process.env.PORT || 3000;
 
 const LoveDir = './Love';
 if (!fs.existsSync(LoveDir)) {
@@ -799,6 +800,29 @@ async function keepSYloveAlive() {
 
 keepSYloveAlive();
 setInterval(keepSYloveAlive, 5 * 60 * 1000);
+
+const server = http.createServer((req, res) => {
+    const uptime = SABIR7718();
+    
+    const responseData = {
+        status: "online",
+        message: "Bot is Running Successfully",
+        uptime: uptime,
+        developer: "SABIR7718",
+        timestamp: new Date().toISOString()
+    };
+
+    res.writeHead(200, { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*' 
+    });
+    
+    res.end(JSON.stringify(responseData, null, 2));
+});
+
+server.listen(PORT, () => {
+    log('success', 'HTTP', `Uptime server started on port ${PORT}`);
+});
 
 if (process.env.URL) {
 
