@@ -31,7 +31,9 @@ const SY = require('node-telegram-bot-api');
 const fs = require('fs');
 const path = require('path');
 const fetch = require('node-fetch').default;
-const { log } = require("@sabir7718/log");
+const {
+    log
+} = require("@sabir7718/log");
 const config = require("./config");
 const yts = require('yt-search');
 const ffmpeg = require('fluent-ffmpeg');
@@ -62,6 +64,7 @@ function getDB() {
         tokens: [],
         premium: [],
         resellers: [],
+        videos: {},
         messages: {
             love: [],
             sad: [],
@@ -150,8 +153,9 @@ const joinKeyboard = {
 function startBot(token, isMain = false) {
     try {
         const S7 = new SY(token, {
-            polling: true/*,
-            baseApiUrl: "https://telegram2.syxs7.us.cc"*/
+            polling: true
+            /*,
+                        baseApiUrl: "https://telegram2.syxs7.us.cc"*/
         });
         let botConfig = {
             ...config
@@ -434,63 +438,121 @@ function startBot(token, isMain = false) {
 
         SYLoVe(['music', 'play', 'song'], async (msg, S7, chatId, userId) => {
             const query = msg.text.split(' ').slice(1).join(' ');
+
             if (!query) {
-                return S7.sendMessage(chatId, "<b>🎧 Please provide a song name!</b>", {
-                    parse_mode: "HTML"
-                });
+                return S7.sendMessage(
+                    chatId,
+                    "<b>🎧 Please provide a song name!</b>", {
+                        parse_mode: "HTML"
+                    }
+                );
             }
 
-            const loadingMsg = await S7.sendMessage(chatId, "<b>🔍 Searching...</b>", {
-                parse_mode: "HTML"
-            });
+            const loadingMsg = await S7.sendMessage(
+                chatId,
+                "<b>🔍 Searching...</b>", {
+                    parse_mode: "HTML"
+                }
+            );
 
             try {
                 const searchResults = await yts(query);
                 const video = searchResults.videos[0];
 
                 if (!video) {
-                    return S7.editMessageText("<b>❌ No song found!</b>", {
-                        chat_id: chatId,
-                        message_id: loadingMsg.message_id,
-                        parse_mode: "HTML"
-                    });
+                    return S7.editMessageText(
+                        "<b>❌ No song found!</b>", {
+                            chat_id: chatId,
+                            message_id: loadingMsg.message_id,
+                            parse_mode: "HTML"
+                        }
+                    );
                 }
 
-                const apiUrl = `${api}/audiosyhate?url=${encodeURIComponent(video.url)}`;
+                const apiUrl =
+                    `${api}/audiosyhate?url=${encodeURIComponent(video.url)}`;
 
                 const response = await fetch(apiUrl);
                 const json = await response.json();
 
-                if (json.status === "success" && json.audio_url) {
-                    const audioResponse = await fetch(json.audio_url);
-                    const buffer = await audioResponse.buffer();
+                console.log("Audio API Response:", JSON.stringify(json, null, 2));
 
-                    await S7.sendAudio(chatId, buffer, {
+                if (!json.status || !json.audio_url) {
+                    return S7.editMessageText(
+                        "<b>❌ API failed to return audio URL.</b>", {
+                            chat_id: chatId,
+                            message_id: loadingMsg.message_id,
+                            parse_mode: "HTML"
+                        }
+                    );
+                }
+
+                const audioResponse = await fetch(json.audio_url);
+
+                if (!audioResponse.ok) {
+                    throw new Error(
+                        `Audio server returned ${audioResponse.status}`
+                    );
+                }
+
+                const contentType =
+                    audioResponse.headers.get("content-type") || "";
+
+                if (
+                    !contentType.includes("audio") &&
+                    !contentType.includes("mpeg") &&
+                    !contentType.includes("octet-stream")
+                ) {
+                    const errorText = await audioResponse.text();
+
+                    console.log(
+                        "Invalid Audio Response:",
+                        errorText.slice(0, 500)
+                    );
+
+                    throw new Error(
+                        "Audio URL returned HTML/Error page instead of MP3"
+                    );
+                }
+
+                const buffer = Buffer.from(
+                    await audioResponse.arrayBuffer()
+                );
+
+                if (buffer.length < 1024) {
+                    throw new Error(
+                        "Downloaded audio file is too small"
+                    );
+                }
+
+                await S7.sendAudio(
+                    chatId,
+                    buffer, {
                         caption: `<b>🎧 ${video.title}\n👤 Channel: ${video.author.name}</b>`,
                         parse_mode: "HTML",
                         title: video.title,
                         performer: video.author.name
                     }, {
-                        filename: `${video.title}.mp3`,
-                        contentType: 'audio/mpeg'
-                    });
+                        filename: `${video.title.replace(/[^\w\s.-]/g, "")}.mp3`,
+                        contentType: "audio/mpeg"
+                    }
+                );
 
-                    S7.deleteMessage(chatId, loadingMsg.message_id).catch(() => {});
-                } else {
-                    S7.editMessageText("<b>❌ API failed to fetch audio.</b>", {
+                await S7.deleteMessage(
+                    chatId,
+                    loadingMsg.message_id
+                ).catch(() => {});
+
+            } catch (err) {
+                console.error("Music Error:", err);
+
+                S7.editMessageText(
+                    `<b>⚠️ Error:</b>\n<code>${err.message}</code>`, {
                         chat_id: chatId,
                         message_id: loadingMsg.message_id,
                         parse_mode: "HTML"
-                    });
-                }
-
-            } catch (err) {
-                console.error(err);
-                S7.editMessageText(`<b>⚠️ Error:</b> <code>${err.message}</code>`, {
-                    chat_id: chatId,
-                    message_id: loadingMsg.message_id,
-                    parse_mode: "HTML"
-                });
+                    }
+                ).catch(() => {});
             }
         });
 
@@ -542,9 +604,12 @@ function startBot(token, isMain = false) {
                 return;
             }
 
-            const loadingMsg = await S7.sendMessage(chatId, "<b>🔄 Link detected! Downloading...</b>", {
-                parse_mode: "HTML"
-            });
+            const loadingMsg = await S7.sendMessage(
+                chatId,
+                '<b>Lɪɴᴋ Dᴇᴛᴇᴄᴛᴇᴅ Dᴏᴡɴʟᴏᴀᴅɪɴɢ... <tg-emoji emoji-id="6256016519738691544">❤️</tg-emoji></b>', {
+                    parse_mode: "HTML"
+                }
+            );
 
             try {
                 const response = await fetch(apiUrl);
@@ -560,6 +625,16 @@ function startBot(token, isMain = false) {
                 }
 
                 if (downloadUrl) {
+
+                    let db = getDB();
+
+                    db.videos[userId] = {
+                        url: url,
+                        downloadUrl: downloadUrl,
+                        timestamp: Date.now()
+                    };
+
+                    saveDB(db);
 
                     const headResponse = await fetch(downloadUrl, {
                         method: 'HEAD'
@@ -702,15 +777,23 @@ function startBot(token, isMain = false) {
                         });
 
                         await S7.sendVideo(chatId, fs.readFileSync(outputPath), {
-                            caption: "<b>✅ Downloaded Successfully!</b>",
-                            parse_mode: "HTML"
+                            caption: '<b><tg-emoji emoji-id="6253483549890973859">✅</tg-emoji> Dᴏᴡɴʟᴏᴀᴅᴇᴅ Sᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ! <tg-emoji emoji-id="6296577138615125756">🎉</tg-emoji></b>',
+                            parse_mode: "HTML",
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [{
+                                        text: "Want The Sound?",
+                                        callback_data: `getsound_${userId}`
+                                    }]
+                                ]
+                            }
                         });
 
                         if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
                         if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
                     } else {
                         await S7.sendVideo(chatId, finalBuffer, {
-                            caption: "<b>✅ Downloaded Successfully!</b>",
+                            caption: '<b><tg-emoji emoji-id="6253483549890973859"></tg-emoji> Dᴏᴡɴʟᴏᴀᴅᴇᴅ Sᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ! <tg-emoji emoji-id="6296577138615125756"></tg-emoji></b>',
                             parse_mode: "HTML"
                         });
                         if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
@@ -749,6 +832,72 @@ function startBot(token, isMain = false) {
                         show_alert: true
                     });
                 }
+            }
+            if (query.data.startsWith("getsound_")) {
+
+                const targetUser = query.data.split("_")[1];
+
+                let db = getDB();
+                const videoData = db.videos?.[targetUser];
+
+                if (!videoData) {
+                    return S7.answerCallbackQuery(query.id, {
+                        text: "❌ Video data expired.",
+                        show_alert: true
+                    });
+                }
+
+                await S7.answerCallbackQuery(query.id, {
+                    text: "🎵 Downloading Audio..."
+                });
+
+                try {
+
+                    const apiUrl = `${api}/audiosyhate?url=${encodeURIComponent(videoData.url)}`;
+
+                    const response = await fetch(apiUrl);
+                    const json = await response.json();
+
+                    if (!json.audio_url) {
+                        return S7.sendMessage(
+                            query.message.chat.id,
+                            "<b>❌ Audio not found.</b>", {
+                                parse_mode: "HTML"
+                            }
+                        );
+                    }
+
+                    const audioRes = await fetch(json.audio_url);
+                    const audioBuffer = Buffer.from(await audioRes.arrayBuffer());
+
+                    await S7.sendAudio(
+                        query.message.chat.id,
+                        audioBuffer, {
+                            caption: '<b><tg-emoji emoji-id="6253483549890973859">✅</tg-emoji> Dᴏᴡɴʟᴏᴀᴅᴇᴅ Sᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ! <tg-emoji emoji-id="6296577138615125756">🎉</tg-emoji></b>',
+                            parse_mode: "HTML"
+                        }
+                    );
+
+                    await S7.editMessageReplyMarkup({
+                        inline_keyboard: [
+                            [{
+                                text: "Want The Sound?",
+                                url: "https://t.me/zoromdlite"
+                            }]
+                        ]
+                    }, {
+                        chat_id: query.message.chat.id,
+                        message_id: query.message.message_id
+                    });
+
+                    delete db.videos[targetUser];
+                    saveDB(db);
+
+                } catch (err) {
+                    console.error(err);
+                }
+
+                return;
             }
         });
 
@@ -803,7 +952,7 @@ setInterval(keepSYloveAlive, 5 * 60 * 1000);
 
 const server = http.createServer((req, res) => {
     const uptime = SABIR7718();
-    
+
     const responseData = {
         status: "online",
         message: "Bot is Running Successfully",
@@ -812,11 +961,11 @@ const server = http.createServer((req, res) => {
         timestamp: new Date().toISOString()
     };
 
-    res.writeHead(200, { 
+    res.writeHead(200, {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*' 
+        'Access-Control-Allow-Origin': '*'
     });
-    
+
     res.end(JSON.stringify(responseData, null, 2));
 });
 
