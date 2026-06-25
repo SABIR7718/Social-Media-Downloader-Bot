@@ -46,5 +46,5 @@ module.exports = {
     
     bot: 'TG TO NUM', // Bot name 
     
-    logo: './SY/Loves.jpg' // Bot logo path or URL
+    logo: 'https://i.ibb.co/k2bZ0RHK/IMG-20260623-234021-101.jpg' // Bot logo path or URL
 };
