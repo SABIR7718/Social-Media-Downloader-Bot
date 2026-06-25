@@ -34,6 +34,7 @@ const fetch = require('node-fetch').default;
 const {
     log
 } = require("@sabir7718/log");
+console.log(require('node-telegram-bot-api'));
 const config = require("./config");
 const yts = require('yt-search');
 const ffmpeg = require('fluent-ffmpeg');
