@@ -497,18 +497,10 @@ function startBot(token, isMain = false) {
                 }
 
                 const audioResponse = await fetch(json.audio_url);
-
-                const buffer = Buffer.from(
-                    await audioResponse.arrayBuffer()
-                );
-
-                if (buffer.length < 1024) {
-                    throw new Error("Downloaded audio file is too small");
-                }
-
+                
                 await S7.sendAudio(
                     chatId,
-                    buffer, {
+                    json.audio_url, {
                         caption: '<b><tg-emoji emoji-id="6253483549890973859">✅</tg-emoji> Downloaded Successfully!</b>',
                         parse_mode: "HTML",
                         title: video.title,
