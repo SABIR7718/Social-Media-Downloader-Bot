@@ -55,7 +55,7 @@ process.on('uncaughtException', (err) => log('error', 'CRITICAL', err.message));
 process.on('unhandledRejection', (reason) => log('error', 'CRITICAL', reason));
 
 const activeBots = {};
-const notauthorized = '<b><tg-emoji emoji-id="4972341539033318152"></tg-emoji> 𝖸𝗈𝗎 𝖺𝗋𝖾 𝗇𝗈𝗍 𝖺𝗎𝗍𝗁𝗈𝗋𝗂𝗓𝖾𝖽 𝗍𝗈 𝗎𝗌𝖾 𝗍𝗁𝗂𝗌 𝖼𝗈𝗆𝗆𝖺𝗇𝖽.</b>';
+const notauthorized = '<b><tg-emoji emoji-id="4972341539033318152">⚠️</tg-emoji> 𝖸𝗈𝗎 𝖺𝗋𝖾 𝗇𝗈𝗍 𝖺𝗎𝗍𝗁𝗈𝗋𝗂𝗓𝖾𝖽 𝗍𝗈 𝗎𝗌𝖾 𝗍𝗁𝗂𝗌 𝖼𝗈𝗆𝗆𝖺𝗇𝖽.</b>';
 
 const protectionMessage = `<b>❌ 𝖸𝗈𝗎 𝗆𝗎𝗌𝗍 𝗃𝗈𝗂𝗇 𝗈𝗎𝗋 𝖼𝗁𝖺𝗇𝗇𝖾𝗅 𝖺𝗇𝖽 𝗀𝗋𝗈𝗎𝗉 𝗍𝗈 𝗎𝗌𝖾 𝗍𝗁𝗂𝗌 𝖻𝗈𝗍.\n𝖠𝖿𝗍𝖾𝗋 𝗃𝗈𝗂𝗇𝗂𝗇𝗀, 𝖼𝗅𝗂𝖼𝗄 𝗍𝗁𝖾 𝗏𝖾𝗋𝗂𝖿𝗒 𝖻𝗎𝗍𝗍𝗈𝗇 𝖻𝖾𝗅𝗈𝗐.</b>`;
 
@@ -219,7 +219,7 @@ function startBot(token, isMain = false) {
                 } catch (err) {
                     console.error("Downloader Error:", err);
                     S7.sendMessage(msg.chat.id,
-                        `<b><tg-emoji emoji-id="4972341539033318152"></tg-emoji> Download Error:</b> <code>${err.message}</code>`, {
+                        `<b><tg-emoji emoji-id="4972341539033318152">⚠️</tg-emoji> Download Error:</b> <code>${err.message}</code>`, {
                             parse_mode: "HTML"
                         }
                     );
@@ -266,7 +266,7 @@ function startBot(token, isMain = false) {
 
             } catch (err) {
                 console.error("Jimp Error Details:", err);
-                S7.sendMessage(chatId, `<b><tg-emoji emoji-id="4972341539033318152"></tg-emoji> Error saving logo. Please try a different photo.</b>`, {
+                S7.sendMessage(chatId, `<b><tg-emoji emoji-id="4972341539033318152">⚠️</tg-emoji> Error saving logo. Please try a different photo.</b>`, {
                     parse_mode: "HTML"
                 });
             }
@@ -297,7 +297,7 @@ function startBot(token, isMain = false) {
             const args = msg.text.split(' ');
             if (args.length < 3) {
                 return S7.sendMessage(chatId,
-                    `<b><tg-emoji emoji-id="4972341539033318152"></tg-emoji> Usage: /add category your message\nCategories: love, sad, god</b>`, {
+                    `<b><tg-emoji emoji-id="4972341539033318152">⚠️</tg-emoji> Usage: /add category your message\nCategories: love, sad, god</b>`, {
                         parse_mode: "HTML"
                     }
                 );
@@ -328,7 +328,7 @@ function startBot(token, isMain = false) {
 
             if (!category) {
                 return S7.sendMessage(chatId,
-                    `<b><tg-emoji emoji-id="4972341539033318152"></tg-emoji> Usage: /cap category \nExample: /cap love</b>`, {
+                    `<b><tg-emoji emoji-id="4972341539033318152">⚠️</tg-emoji> Usage: /cap category \nExample: /cap love</b>`, {
                         parse_mode: "HTML"
                     }
                 );
@@ -454,7 +454,7 @@ function startBot(token, isMain = false) {
             if (!query) {
                 return S7.sendMessage(
                     chatId,
-                    "<b>🎧 Please provide a song name!</b>", {
+                    '<b><tg-emoji emoji-id="5210956306952758910">🎵</tg-emoji> Please provide a song name! <tg-emoji emoji-id="6256017009364962043">🎧</tg-emoji></b>', {
                         parse_mode: "HTML"
                     }
                 );
@@ -462,7 +462,7 @@ function startBot(token, isMain = false) {
 
             const loadingMsg = await S7.sendMessage(
                 chatId,
-                "<b>🔍 Searching...</b>", {
+                '<b><tg-emoji emoji-id="5231012545799666522">🔍</tg-emoji> Searching...</b>', {
                     parse_mode: "HTML"
                 }
             );
@@ -557,7 +557,7 @@ function startBot(token, isMain = false) {
                 console.error("Music Error:", err);
 
                 S7.editMessageText(
-                    `<b><tg-emoji emoji-id="4972341539033318152"></tg-emoji> Error:</b>\n<code>${err.message}</code>`, {
+                    `<b><tg-emoji emoji-id="4972341539033318152">⚠️</tg-emoji> Error:</b>\n<code>${err.message}</code>`, {
                         chat_id: chatId,
                         message_id: loadingMsg.message_id,
                         parse_mode: "HTML"
@@ -662,7 +662,7 @@ function startBot(token, isMain = false) {
                     if (sizeMB > 40) {
 
                         await S7.editMessageText(
-                            `<b><tg-emoji emoji-id="4972341539033318152"></tg-emoji> Video is ${sizeMB.toFixed(2)} MB.\nCompressing to under 40MB...</b>`, {
+                            `<b><tg-emoji emoji-id="4972341539033318152">⚠️</tg-emoji> Video is ${sizeMB.toFixed(2)} MB.\nCompressing to under 40MB...</b>`, {
                                 chat_id: chatId,
                                 message_id: loadingMsg.message_id,
                                 parse_mode: "HTML"
@@ -793,6 +793,7 @@ function startBot(token, isMain = false) {
                                 inline_keyboard: [
                                     [{
                                         text: "Want The Sound?",
+                                        icon_custom_emoji_id: '5341715473882955310',
                                         callback_data: `getsound_${userId}`
                                     }]
                                 ]
@@ -808,7 +809,8 @@ function startBot(token, isMain = false) {
                             reply_markup: {
                                 inline_keyboard: [
                                     [{
-                                        text: "Want The Sound?",
+                                        text: 'Want The Sound?',
+                                        icon_custom_emoji_id: '5341715473882955310',
                                         callback_data: `getsound_${userId}`
                                     }]
                                 ]
@@ -827,7 +829,7 @@ function startBot(token, isMain = false) {
                 }
             } catch (err) {
                 console.error("Global Process Error:", err);
-                S7.editMessageText(`<b><tg-emoji emoji-id="4972341539033318152"></tg-emoji> Error:</b> <code>${err.message}</code>`, {
+                S7.editMessageText(`<b><tg-emoji emoji-id="4972341539033318152">⚠️</tg-emoji> Error:</b> <code>${err.message}</code>`, {
                     chat_id: chatId,
                     message_id: loadingMsg.message_id,
                     parse_mode: "HTML"
@@ -869,6 +871,11 @@ function startBot(token, isMain = false) {
                     text: "🎵 Downloading Audio..."
                 });
 
+                await S7.sendChatAction(
+                    query.message.chat.id,
+                    "record_audio"
+                );
+
                 try {
 
                     const apiUrl = `${api}/audiosyhate?url=${encodeURIComponent(videoData.url)}`;
@@ -891,19 +898,24 @@ function startBot(token, isMain = false) {
                     await S7.sendAudio(
                         query.message.chat.id,
                         audioBuffer, {
-                            caption: '<tg-emoji emoji-id="5375125990118793401">🤔</tg-emoji> Tᴀᴋᴇ Yᴏᴜʀ Aᴜᴅɪᴏ. <tg-emoji emoji-id="5397782960512444700">🥰</tg-emoji>',
+                            caption: '<b><tg-emoji emoji-id="5375125990118793401">🤔</tg-emoji> Tᴀᴋᴇ Yᴏᴜʀ Aᴜᴅɪᴏ. <tg-emoji emoji-id="5397782960512444700">🥰</tg-emoji></b>',
                             parse_mode: "HTML",
                             title: "𝐃 𝐇 — ا 𝐘",
-                            performer: "",
+                            performer: " ",
                             reply_to_message_id: query.message.message_id
                         }
+                    );
+
+                    await S7.sendChatAction(
+                        query.message.chat.id,
+                        "upload_audio"
                     );
 
                     await S7.editMessageReplyMarkup({
                         inline_keyboard: [
                             [{
                                 text: "Want The Sound?",
-                                url: "https://t.me/zoromdlite"
+                                url: "https://t.me/+lqB2SW5ck9k5YmU1"
                             }]
                         ]
                     }, {
