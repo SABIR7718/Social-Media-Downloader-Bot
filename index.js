@@ -891,10 +891,10 @@ function startBot(token, isMain = false) {
                     await S7.sendAudio(
                         query.message.chat.id,
                         audioBuffer, {
-                            caption: '<tg-emoji emoji-id="5375125990118793401"></tg-emoji> Tᴀᴋᴇ Yᴏᴜʀ Aᴜᴅɪᴏ. <tg-emoji emoji-id="5397782960512444700"></tg-emoji>',
+                            caption: '<tg-emoji emoji-id="5375125990118793401">🤔</tg-emoji> Tᴀᴋᴇ Yᴏᴜʀ Aᴜᴅɪᴏ. <tg-emoji emoji-id="5397782960512444700">🥰</tg-emoji>',
                             parse_mode: "HTML",
                             title: "𝐃 𝐇 — ا 𝐘",
-                            performer: "𝐃 𝐇 — ا 𝐘",
+                            performer: "",
                             reply_to_message_id: query.message.message_id
                         }
                     );
