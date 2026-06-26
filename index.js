@@ -485,18 +485,20 @@ function startBot(token, isMain = false) {
                     `${api}/audiosyhate?url=${encodeURIComponent(video.url)}`;
 
                 const response = await fetch(apiUrl);
+
+                if (!response.ok) {
+                    throw new Error(`API returned ${response.status}`);
+                }
+
                 const json = await response.json();
 
-                console.log("Audio API Response:", JSON.stringify(json, null, 2));
+                console.log(
+                    "Audio API Response:",
+                    JSON.stringify(json, null, 2)
+                );
 
-                if (!json.status || !json.audio_url) {
-                    return S7.editMessageText(
-                        "<b>❌ API failed to return audio URL.</b>", {
-                            chat_id: chatId,
-                            message_id: loadingMsg.message_id,
-                            parse_mode: "HTML"
-                        }
-                    );
+                if (!json.audio_url) {
+                    throw new Error("Audio URL not found in API response");
                 }
 
                 const audioResponse = await fetch(json.audio_url);
@@ -507,44 +509,22 @@ function startBot(token, isMain = false) {
                     );
                 }
 
-                const contentType =
-                    audioResponse.headers.get("content-type") || "";
-
-                if (
-                    !contentType.includes("audio") &&
-                    !contentType.includes("mpeg") &&
-                    !contentType.includes("octet-stream")
-                ) {
-                    const errorText = await audioResponse.text();
-
-                    console.log(
-                        "Invalid Audio Response:",
-                        errorText.slice(0, 500)
-                    );
-
-                    throw new Error(
-                        "Audio URL returned HTML/Error page instead of MP3"
-                    );
-                }
-
                 const buffer = Buffer.from(
                     await audioResponse.arrayBuffer()
                 );
 
                 if (buffer.length < 1024) {
-                    throw new Error(
-                        "Downloaded audio file is too small"
-                    );
+                    throw new Error("Downloaded audio file is too small");
                 }
 
                 await S7.sendAudio(
-                    query.message.chat.id,
-                    audioBuffer, {
-                        caption: '<b><tg-emoji emoji-id="6253483549890973859">✅</tg-emoji> Dᴏᴡɴʟᴏᴀᴅᴇᴅ Sᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ! <tg-emoji emoji-id="6296577138615125756">🎉</tg-emoji></b>',
+                    chatId,
+                    buffer, {
+                        caption: '<b><tg-emoji emoji-id="6253483549890973859">✅</tg-emoji> Downloaded Successfully!</b>',
                         parse_mode: "HTML",
-                        title: "𝐃 𝐇 — ا 𝐘",
-                        performer: "𝐃 𝐇 — ا 𝐘",
-                        reply_to_message_id: query.message.message_id
+                        title: video.title,
+                        performer: video.author?.name || "Unknown",
+                        reply_to_message_id: msg.message_id
                     }
                 );
 
