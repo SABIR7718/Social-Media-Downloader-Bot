@@ -124,27 +124,27 @@ function SABIR7718() {
 const startTime = Date.now();
 
 function mainCaption(name, runtime) {
-    return `<b>─【 𝐒𝐎𝐂𝐈𝐀𝐋 𝐌𝐄𝐃𝐈𝐀 - 𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃𝐄𝐑 】─
+    return `<b><tg-emoji emoji-id="6253483549890973859">🚀</tg-emoji> ─【 𝐒𝐎𝐂𝐈𝐀𝐋 𝐌𝐄𝐃𝐈𝐀 - 𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃𝐄𝐑 】─ <tg-emoji emoji-id="6296577138615125756">🎉</tg-emoji>
 
- 𝖴𝗌𝖾𝗋 : ${name}
- 𝖱𝗎𝗇𝗍𝗂𝗆𝖾 : ${runtime}
- 𝖣𝖾𝗏𝖾𝗅𝗈𝗉𝖾𝗋 : ${config.S7}
+ <tg-emoji emoji-id="5330237710655306682">👤</tg-emoji> 𝖴𝗌𝖾𝗋 : ${name}
+ <tg-emoji emoji-id="5420315771991497307">⏰</tg-emoji> 𝖱𝗎𝗇𝗍𝗂𝗆𝖾 : ${runtime}
+ <tg-emoji emoji-id="5465665476971471368">👨‍💻</tg-emoji> 𝖣𝖾𝗏𝖾𝗅𝗈𝗉𝖾𝗋 : ${config.S7}
 
-For Song Use</b> <code>/music</code> <b>( song name )</b>`;
+<tg-emoji emoji-id="5258301752354998210">🎵</tg-emoji> For Song Use</b> <code>/music</code> <b>( song name )</b>`;
 }
 
 const joinKeyboard = {
     reply_markup: {
         inline_keyboard: [
             [{
-                text: '📢 𝖩𝗈𝗂𝗇 𝖢𝗁𝖺𝗇𝗇𝖾𝗅',
+                text: '📢 <tg-emoji emoji-id="5330237710655306682">✨</tg-emoji> 𝖩𝗈𝗂𝗇 𝖢𝗁𝖺𝗇𝗇𝖾𝗅',
                 url: config.channel
             }, {
-                text: '👥 𝖩𝗈𝗂𝗇 𝖦𝗋𝗈𝗎𝗉',
+                text: '👥 <tg-emoji emoji-id="5330237710655306682">✨</tg-emoji> 𝖩𝗈𝗂𝗇 𝖦𝗋𝗈𝗎𝗉',
                 url: config.group
             }],
             [{
-                text: '✅ 𝖵𝖾𝗋𝗂𝖿𝗒 𝖬𝖾𝗆𝖻𝖾𝗋𝗌𝗁𝗂𝗉',
+                text: '✅ <tg-emoji emoji-id="6253483549890973859">🚀</tg-emoji> 𝖵𝖾𝗋𝗂𝖿𝗒 𝖬𝖾𝗆𝖻𝖾𝗋𝗌𝗁𝗂𝗉',
                 callback_data: 'check_membership'
             }]
         ]
@@ -794,8 +794,16 @@ function startBot(token, isMain = false) {
                         if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
                     } else {
                         await S7.sendVideo(chatId, finalBuffer, {
-                            caption: '<b><tg-emoji emoji-id="6253483549890973859"></tg-emoji> Dᴏᴡɴʟᴏᴀᴅᴇᴅ Sᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ! <tg-emoji emoji-id="6296577138615125756"></tg-emoji></b>',
-                            parse_mode: "HTML"
+                            caption: '<b><tg-emoji emoji-id="6253483549890973859">✅</tg-emoji> Dᴏᴡɴʟᴏᴀᴅᴇᴅ Sᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ! <tg-emoji emoji-id="6296577138615125756">🎉</tg-emoji></b>',
+                            parse_mode: "HTML",
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [{
+                                        text: "Want The Sound?",
+                                        callback_data: `getsound_${userId}`
+                                    }]
+                                ]
+                            }
                         });
                         if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
                     }
