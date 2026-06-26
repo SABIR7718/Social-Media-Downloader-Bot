@@ -491,23 +491,12 @@ function startBot(token, isMain = false) {
                 }
 
                 const json = await response.json();
-
-                console.log(
-                    "Audio API Response:",
-                    JSON.stringify(json, null, 2)
-                );
-
+                
                 if (!json.audio_url) {
                     throw new Error("Audio URL not found in API response");
                 }
 
                 const audioResponse = await fetch(json.audio_url);
-
-                if (!audioResponse.ok) {
-                    throw new Error(
-                        `Audio server returned ${audioResponse.status}`
-                    );
-                }
 
                 const buffer = Buffer.from(
                     await audioResponse.arrayBuffer()
