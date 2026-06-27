@@ -876,6 +876,7 @@ function startBot(token, isMain = false) {
                         inline_keyboard: [
                             [{
                                 text: "Want The Sound?",
+                                icon_custom_emoji_id: '5341715473882955310',
                                 url: "https://t.me/+lqB2SW5ck9k5YmU1"
                             }]
                         ]
