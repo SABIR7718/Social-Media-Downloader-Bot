@@ -587,21 +587,6 @@ function startBot(token, isMain = false) {
                 const json = await response.json();
                 log('info', 'API', `Response ` + JSON.stringify(json, null, 2));
 
-                if (platform === 'ig') {
-                    const isImage = (json.media_details && json.media_details[0]?.type === 'image');
-
-                    if (isImage) {
-                        const imgUrl = Array.isArray(json.video_url) ? json.video_url[0] : json.video_url;
-
-                        await S7.sendPhoto(chatId, imgUrl, {
-                            caption: '<b><tg-emoji emoji-id="6253483549890973859">✅</tg-emoji> Iᴍᴀɢᴇ Dᴏᴡɴʟᴏᴀᴅᴇ Sᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ! <tg-emoji emoji-id="6296577138615125756">🎉</tg-emoji></b>',
-                            parse_mode: "HTML"
-                        });
-
-                        return S7.deleteMessage(chatId, loadingMsg.message_id).catch(() => {});
-                    }
-                }
-
                 let downloadUrl = null;
 
                 if (json.video_url) {
@@ -611,8 +596,6 @@ function startBot(token, isMain = false) {
                 }
 
                 if (downloadUrl) {
-
-
                     let db = getDB();
 
                     db.videos[userId] = {
@@ -626,18 +609,31 @@ function startBot(token, isMain = false) {
                     const headResponse = await fetch(downloadUrl, {
                         method: 'HEAD'
                     });
-
-                    const videoResponse = await fetch(downloadUrl);
-                    const arrayBuffer = await videoResponse.arrayBuffer();
-                    const videoBuffer = Buffer.from(arrayBuffer);
-
                     const contentLength = headResponse.headers.get('content-length');
+                    const contentType = headResponse.headers.get('content-type') || '';
                     const sizeMB = contentLength ? parseInt(contentLength) / (1024 * 1024) : 0;
 
-                    let finalBuffer;
+                    if (contentType.startsWith('image/') || downloadUrl.match(/\.(jpeg|jpg|png|webp)/i)) {
+                        await S7.sendPhoto(chatId, downloadUrl, {
+                            caption: '<b><tg-emoji emoji-id="6253483549890973859">✅</tg-emoji> Iᴍᴀɢᴇ Dᴏᴡɴʟᴏᴀᴅᴇᴅ Sᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ! <tg-emoji emoji-id="6296577138615125756">🎉</tg-emoji></b>',
+                            parse_mode: "HTML"
+                        });
+                        return S7.deleteMessage(chatId, loadingMsg.message_id).catch(() => {});
+                    }
+
+                    const tempRawInput = path.resolve(LoveDir, `raw_${userId}_${Date.now()}.mp4`);
+                    const videoResponse = await fetch(downloadUrl);
+                    const fileStream = fs.createWriteStream(tempRawInput);
+
+                    await new Promise((resolve, reject) => {
+                        videoResponse.body.pipe(fileStream);
+                        videoResponse.body.on('error', reject);
+                        fileStream.on('finish', resolve);
+                    });
+
+                    let finalPath = tempRawInput;
 
                     if (sizeMB > 40) {
-
                         await S7.editMessageText(
                             `<b><tg-emoji emoji-id="4972341539033318152">⚠️</tg-emoji> Video is ${sizeMB.toFixed(2)} MB.\nCompressing to under 40MB...</b>`, {
                                 chat_id: chatId,
@@ -646,14 +642,10 @@ function startBot(token, isMain = false) {
                             }
                         );
 
-                        const tempInput = path.resolve(LoveDir, `big_${userId}_${Date.now()}.mp4`);
                         const tempOutput = path.resolve(LoveDir, `compressed_${userId}_${Date.now()}.mp4`);
 
-                        fs.writeFileSync(tempInput, videoBuffer);
-
                         await new Promise((resolve, reject) => {
-
-                            ffmpeg(tempInput)
+                            ffmpeg(tempRawInput)
                                 .videoCodec('libx264')
                                 .audioCodec('aac')
                                 .outputOptions([
@@ -666,18 +658,15 @@ function startBot(token, isMain = false) {
                                 .on('end', resolve)
                                 .on('error', reject)
                                 .save(tempOutput);
-
                         });
 
                         const compressedStats = fs.statSync(tempOutput);
                         const compressedMB = compressedStats.size / (1024 * 1024);
 
                         if (compressedMB > 30) {
-
                             const secondOutput = path.resolve(LoveDir, `compressed2_${userId}_${Date.now()}.mp4`);
 
                             await new Promise((resolve, reject) => {
-
                                 ffmpeg(tempOutput)
                                     .videoCodec('libx264')
                                     .audioCodec('aac')
@@ -691,33 +680,19 @@ function startBot(token, isMain = false) {
                                     .on('end', resolve)
                                     .on('error', reject)
                                     .save(secondOutput);
-
                             });
 
-                            finalBuffer = fs.readFileSync(secondOutput);
-
-                            if (fs.existsSync(secondOutput)) fs.unlinkSync(secondOutput);
-
+                            finalPath = secondOutput;
+                            if (fs.existsSync(tempOutput)) fs.unlinkSync(tempOutput);
                         } else {
-
-                            finalBuffer = fs.readFileSync(tempOutput);
-
+                            finalPath = tempOutput;
                         }
 
-                        if (fs.existsSync(tempInput)) fs.unlinkSync(tempInput);
-                        if (fs.existsSync(tempOutput)) fs.unlinkSync(tempOutput);
-
-                    } else {
-
-                        finalBuffer = videoBuffer;
-
+                        if (fs.existsSync(tempRawInput)) fs.unlinkSync(tempRawInput);
                     }
 
                     const logoPath = path.resolve(LoveDir, `logo_${userId}.png`);
-                    const inputPath = path.resolve(LoveDir, `in_${userId}_${Date.now()}.mp4`);
                     const outputPath = path.resolve(LoveDir, `out_${userId}_${Date.now()}.mp4`);
-
-                    fs.writeFileSync(inputPath, finalBuffer);
 
                     if (fs.existsSync(logoPath)) {
                         await S7.editMessageText("<b>✅ Download successful! Adding your logo... ⏳</b>", {
@@ -727,7 +702,7 @@ function startBot(token, isMain = false) {
                         });
 
                         await new Promise((resolve, reject) => {
-                            ffmpeg(inputPath)
+                            ffmpeg(finalPath)
                                 .input(logoPath)
                                 .complexFilter([{
                                         filter: 'scale',
@@ -763,7 +738,7 @@ function startBot(token, isMain = false) {
                                 .run();
                         });
 
-                        await S7.sendVideo(chatId, fs.readFileSync(outputPath), {
+                        await S7.sendVideo(chatId, outputPath, {
                             caption: '<b><tg-emoji emoji-id="6253483549890973859">✅</tg-emoji> Dᴏᴡɴʟᴏᴀᴅᴇᴅ Sᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ! <tg-emoji emoji-id="6296577138615125756">🎉</tg-emoji></b>',
                             parse_mode: "HTML",
                             reply_markup: {
@@ -777,10 +752,10 @@ function startBot(token, isMain = false) {
                             }
                         });
 
-                        if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+                        if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath);
                         if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
                     } else {
-                        await S7.sendVideo(chatId, finalBuffer, {
+                        await S7.sendVideo(chatId, finalPath, {
                             caption: '<b><tg-emoji emoji-id="6253483549890973859">✅</tg-emoji> Dᴏᴡɴʟᴏᴀᴅᴇᴅ Sᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ! <tg-emoji emoji-id="6296577138615125756">🎉</tg-emoji></b>',
                             parse_mode: "HTML",
                             reply_markup: {
@@ -793,7 +768,7 @@ function startBot(token, isMain = false) {
                                 ]
                             }
                         });
-                        if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+                        if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath);
                     }
 
                     S7.deleteMessage(chatId, loadingMsg.message_id).catch(() => {});
@@ -812,6 +787,7 @@ function startBot(token, isMain = false) {
                     parse_mode: "HTML"
                 });
             }
+
         });
 
         S7.on('callback_query', async (query) => {
