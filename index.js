@@ -491,13 +491,13 @@ function startBot(token, isMain = false) {
                 }
 
                 const json = await response.json();
-                
+
                 if (!json.audio_url) {
                     throw new Error("Audio URL not found in API response");
                 }
 
                 const audioResponse = await fetch(json.audio_url);
-                
+
                 await S7.sendAudio(
                     chatId,
                     json.audio_url, {
@@ -587,15 +587,31 @@ function startBot(token, isMain = false) {
                 const json = await response.json();
                 log('info', 'API', `Response ` + JSON.stringify(json, null, 2));
 
+                if (platform === 'ig') {
+                    const isImage = (json.media_details && json.media_details[0]?.type === 'image');
+
+                    if (isImage) {
+                        const imgUrl = Array.isArray(json.video_url) ? json.video_url[0] : json.video_url;
+
+                        await S7.sendPhoto(chatId, imgUrl, {
+                            caption: '<b><tg-emoji emoji-id="6253483549890973859">✅</tg-emoji> Iᴍᴀɢᴇ Dᴏᴡɴʟᴏᴀᴅᴇ Sᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ! <tg-emoji emoji-id="6296577138615125756">🎉</tg-emoji></b>',
+                            parse_mode: "HTML"
+                        });
+
+                        return S7.deleteMessage(chatId, loadingMsg.message_id).catch(() => {});
+                    }
+                }
+
                 let downloadUrl = null;
 
                 if (json.video_url) {
-                    downloadUrl = json.video_url;
+                    downloadUrl = Array.isArray(json.video_url) ? json.video_url[0] : json.video_url;
                 } else if (platform === 'pin' && json.media_url) {
                     downloadUrl = json.media_url;
                 }
 
                 if (downloadUrl) {
+
 
                     let db = getDB();
 
@@ -797,7 +813,6 @@ function startBot(token, isMain = false) {
                 });
             }
         });
-
 
         S7.on('callback_query', async (query) => {
             if (query.data === 'check_membership') {
